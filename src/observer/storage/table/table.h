@@ -16,6 +16,7 @@ See the Mulan PSL v2 for more details. */
 
 #include <functional>
 #include "storage/table/table_meta.h"
+#include "sql/parser/parse_defs.h"
 
 struct RID;
 class Record;
@@ -83,6 +84,7 @@ public:
    */
   RC insert_record(Record &record);
   RC delete_record(const Record &record);
+  RC update_record(Record &record, const Value &value, const std::string &field);
   RC visit_record(const RID &rid, bool readonly, std::function<void(Record &)> visitor);
   RC get_record(const RID &rid, Record &record);
 

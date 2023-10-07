@@ -20,6 +20,7 @@ See the Mulan PSL v2 for more details. */
 #include <utility>
 
 #include "sql/parser/parse.h"
+#include "sql/parser/parse_defs.h"
 #include "storage/record/record_manager.h"
 #include "storage/field/field_meta.h"
 #include "storage/table/table.h"
@@ -146,6 +147,7 @@ public:
 
   virtual RC insert_record(Table *table, Record &record) = 0;
   virtual RC delete_record(Table *table, Record &record) = 0;
+  virtual RC update_record(Table *table, Record &record, const Value &value, const std::string &field) = 0; // 没有实现mvcc_trx中的具体细节，只实现没有事务的版本
   virtual RC visit_record(Table *table, Record &record, bool readonly) = 0;
 
   virtual RC start_if_need() = 0;
