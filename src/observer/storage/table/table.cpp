@@ -334,7 +334,8 @@ RC Table::make_record(int value_num, const Value *values, Record &record)
     if (field->type() == CHARS) {
       const size_t data_len = value.length();
       if (copy_len > data_len) {
-        copy_len = data_len + 1;
+        copy_len = data_len + 1; // remomber c_string end with additional '\0'
+        // 只要有'\0'，就停止检索，只读取到这了
       }
     }
     memcpy(record_data + field->offset(), value.data(), copy_len);
@@ -481,6 +482,51 @@ RC Table::delete_record(const Record &record)
            name(), index->index_meta().name(), record.rid().to_string().c_str(), strrc(rc));
   }
   rc = record_handler_->delete_record(&record.rid());
+  return rc;
+}
+
+RC Table::update_record(Record &record, const Value &value, const std::string &field)
+{
+  // 这里就用已经实现的接口，先删除再插入
+  const int record_size = table_meta_.record_size();
+  char *record_data = (char *)malloc(record_size);
+  const char *field_name = field.c_str();
+  const FieldMeta *field_meta = table_meta_.field(field_name);
+
+  /* 这段加了有问题
+  if (false && record.len() != record_size) { // skip judge
+    LOG_WARN("update record length(%d bytes) not equal to table record length(%d bytes)", 
+        record.len(), record_size);
+    return RC::INTERNAL;
+  }
+  */
+
+  memcpy(record_data, record.data(), record_size);
+  size_t copy_len = field_meta->len();
+  if (field_meta->type() == CHARS) {
+    const size_t data_len = value.length();
+    if (copy_len > data_len) {
+      copy_len = data_len + 1; // remomber c_string end with additional '\0'
+      // 只要有'\0'，就停止检索，只读取到这了
+    }
+  }
+  memcpy(record_data + field_meta->offset(), value.data(), copy_len);
+
+  // 这里将data修改好了，但是需要先将表中的record删了，再将record赋予新的data，重新插入record
+
+  // 先删除
+  RC rc = delete_record(record);
+  ASSERT(RC::SUCCESS == rc,
+      "Failed to delete record in poccess of updating, rc=%s",
+      strrc(rc));
+
+  // 准备record，并插入
+  record.set_data_owner(record_data, record_size);
+  rc = insert_record(record);
+  ASSERT(RC::SUCCESS == rc,
+      "Failed to delete record in poccess of updating, rc=%s",
+      strrc(rc));
+  
   return rc;
 }
 
