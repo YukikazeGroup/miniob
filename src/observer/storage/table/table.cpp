@@ -243,6 +243,23 @@ RC Table::insert_record(Record &record)
   return rc;
 }
 
+RC Table::insert_record(std::vector<Record> &records)
+{
+  RC rc = RC::SUCCESS;
+  for (auto it = records.begin();
+      it != records.end();
+      ++it)
+  {
+    rc = insert_record((*it));
+    if (rc != RC::SUCCESS) {
+      // LOG_ERROR("Insert record failed. table name=%s, rc=%s", table_meta_.name(), strrc(rc));
+      // 不需要写，Table::insert_record(Record &record)里已经有了
+      return rc;
+    }
+  }
+  return rc;
+}
+
 RC Table::visit_record(const RID &rid, bool readonly, std::function<void(Record &)> visitor)
 {
   return record_handler_->visit_record(rid, readonly, visitor);
@@ -524,7 +541,7 @@ RC Table::update_record(Record &record, const Value &value, const std::string &f
   record.set_data_owner(record_data, record_size);
   rc = insert_record(record);
   ASSERT(RC::SUCCESS == rc,
-      "Failed to delete record in poccess of updating, rc=%s",
+      "Failed to insert record in poccess of updating, rc=%s",
       strrc(rc));
   
   return rc;

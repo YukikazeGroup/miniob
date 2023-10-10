@@ -83,6 +83,7 @@ public:
    * @param record[in/out] 传入的数据包含具体的数据，插入成功会通过此字段返回RID
    */
   RC insert_record(Record &record);
+  RC insert_record(std::vector<Record> &records); // 重复调用insert_record，插入多条record
   RC delete_record(const Record &record);
   RC update_record(Record &record, const Value &value, const std::string &field);
   RC visit_record(const RID &rid, bool readonly, std::function<void(Record &)> visitor);

@@ -132,8 +132,9 @@ MvccTrx::~MvccTrx()
 {
 }
 
-RC MvccTrx::insert_record(Table *table, Record &record)
+RC MvccTrx::insert_record(Table *table, std::vector<Record> &records)
 {
+  /*   先不实现
   Field begin_field;
   Field end_field;
   trx_fields(table, begin_field, end_field);
@@ -147,7 +148,7 @@ RC MvccTrx::insert_record(Table *table, Record &record)
     return rc;
   }
 
-  rc = log_manager_->append_log(CLogType::INSERT, trx_id_, table->table_id(), record.rid(), record.len(), 0/*offset*/, record.data());
+  rc = log_manager_->append_log(CLogType::INSERT, trx_id_, table->table_id(), record.rid(), record.len(), 0, record.data()); // 0 是 offset
   ASSERT(rc == RC::SUCCESS, "failed to append insert record log. trx id=%d, table id=%d, rid=%s, record len=%d, rc=%s",
       trx_id_, table->table_id(), record.rid().to_string().c_str(), record.len(), strrc(rc));
 
@@ -158,6 +159,8 @@ RC MvccTrx::insert_record(Table *table, Record &record)
     LOG_WARN("failed to insert operation(insertion) into operation set: duplicate");
   }
   return rc;
+  */
+  return RC::UNIMPLENMENT;
 }
 
 RC MvccTrx::delete_record(Table * table, Record &record)

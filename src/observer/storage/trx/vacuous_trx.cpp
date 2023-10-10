@@ -51,9 +51,9 @@ void VacuousTrxKit::all_trxes(std::vector<Trx *> &trxes)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-RC VacuousTrx::insert_record(Table *table, Record &record)
+RC VacuousTrx::insert_record(Table *table, std::vector<Record> &records)
 {
-  return table->insert_record(record);
+  return table->insert_record(records);
 }
 
 RC VacuousTrx::delete_record(Table *table, Record &record)

@@ -110,6 +110,7 @@ ArithmeticExpr *create_arithmetic_expression(ArithmeticExpr::Type type,
   Expression *                      expression;
   std::vector<Expression *> *       expression_list;
   std::vector<Value> *              value_list;
+  std::vector<std::vector<Value>> * value_list_list;
   std::vector<ConditionSqlNode> *   condition_list;
   std::vector<RelAttrSqlNode> *     rel_attr_list;
   std::vector<std::string> *        relation_list;
@@ -134,6 +135,8 @@ ArithmeticExpr *create_arithmetic_expression(ArithmeticExpr::Type type,
 %type <attr_infos>          attr_def_list
 %type <attr_info>           attr_def
 %type <value_list>          value_list
+%type <value_list_list>     value_list_list
+%type <value_list>          value_tuple
 %type <condition_list>      where
 %type <condition_list>      condition_list
 %type <rel_attr_list>       select_attr
@@ -280,6 +283,7 @@ drop_index_stmt:      /*drop index 语句的语法解析树*/
       free($5);
     }
     ;
+
 create_table_stmt:    /*create table 语句的语法解析树*/
     CREATE TABLE ID LBRACE attr_def attr_def_list RBRACE
     {
@@ -298,6 +302,7 @@ create_table_stmt:    /*create table 语句的语法解析树*/
       delete $5;
     }
     ;
+
 attr_def_list:
     /* empty */
     {
@@ -333,26 +338,71 @@ attr_def:
       free($1);
     }
     ;
+
 number:
     NUMBER {$$ = $1;}
     ;
+
 type:
-    INT_T      { $$=INTS; }
-    | STRING_T { $$=CHARS; }
-    | FLOAT_T  { $$=FLOATS; }
+    INT_T      
+    { 
+      $$=INTS;
+    }
+    | STRING_T 
+    { 
+      $$=CHARS; 
+    }
+    | FLOAT_T  
+    { 
+      $$=FLOATS; 
+    }
     ;
+
 insert_stmt:        /*insert   语句的语法解析树*/
-    INSERT INTO ID VALUES LBRACE value value_list RBRACE 
+    INSERT INTO ID VALUES value_list_list
     {
       $$ = new ParsedSqlNode(SCF_INSERT);
       $$->insertion.relation_name = $3;
-      if ($7 != nullptr) {
-        $$->insertion.values.swap(*$7);
-      }
-      $$->insertion.values.emplace_back(*$6);
-      std::reverse($$->insertion.values.begin(), $$->insertion.values.end());
-      delete $6;
+      if ($5 != nullptr) {
+        $$->insertion.values_list.swap(*$5);
+        std::reverse($$->insertion.values_list.begin(),
+            $$->insertion.values_list.end());
+        delete $5;
+      } 
       free($3);
+    }
+    ;
+
+value_list_list:
+    /* empty */
+    {
+      $$ = nullptr;
+    }
+    | value_tuple {
+      $$ = new std::vector<std::vector<Value>>;
+      $$->emplace_back(*$1);
+      delete $1;
+    } 
+    | value_tuple COMMA value_list_list {
+      $$ = $3;
+      $$->emplace_back(*$1);
+      delete $1;
+    }
+    ;
+    
+value_tuple:
+    /* empty */
+    {
+      $$ = nullptr;
+    }
+    | LBRACE value value_list RBRACE {
+      $$ = new std::vector<Value>;
+      if ($3 != nullptr) {
+        $$->swap(*$3);
+      }
+      $$->emplace_back(*$2);
+      std::reverse($$->begin(), $$->end());
+      delete $2;
     }
     ;
 
@@ -371,6 +421,7 @@ value_list:
       delete $2;
     }
     ;
+
 value:
     NUMBER {
       $$ = new Value((int)$1);
@@ -399,6 +450,7 @@ delete_stmt:    /*  delete 语句的语法解析树*/
       free($3);
     }
     ;
+
 update_stmt:      /*  update 语句的语法解析树*/
     UPDATE ID SET ID EQ value where 
     {
@@ -414,6 +466,7 @@ update_stmt:      /*  update 语句的语法解析树*/
       free($4);
     }
     ;
+
 select_stmt:        /*  select 语句的语法解析树*/
     SELECT select_attr FROM ID rel_list where
     {
@@ -436,6 +489,7 @@ select_stmt:        /*  select 语句的语法解析树*/
       free($4);
     }
     ;
+
 calc_stmt:
     CALC expression_list
     {
@@ -462,6 +516,7 @@ expression_list:
       $$->emplace_back($1);
     }
     ;
+
 expression:
     expression '+' expression {
       $$ = create_arithmetic_expression(ArithmeticExpr::Type::ADD, $1, $3, sql_string, &@$);
@@ -556,6 +611,7 @@ rel_list:
       free($2);
     }
     ;
+
 where:
     /* empty */
     {
@@ -565,6 +621,7 @@ where:
       $$ = $2;  
     }
     ;
+
 condition_list:
     /* empty */
     {
@@ -581,6 +638,7 @@ condition_list:
       delete $1;
     }
     ;
+
 condition:
     rel_attr comp_op value
     {
@@ -633,12 +691,25 @@ condition:
     ;
 
 comp_op:
-      EQ { $$ = EQUAL_TO; }
-    | LT { $$ = LESS_THAN; }
-    | GT { $$ = GREAT_THAN; }
-    | LE { $$ = LESS_EQUAL; }
-    | GE { $$ = GREAT_EQUAL; }
-    | NE { $$ = NOT_EQUAL; }
+    EQ 
+    { 
+      $$ = EQUAL_TO; 
+    }
+    | LT { 
+      $$ = LESS_THAN; 
+    }
+    | GT { 
+      $$ = GREAT_THAN; 
+    }
+    | LE { 
+      $$ = LESS_EQUAL; 
+    }
+    | GE { 
+      $$ = GREAT_EQUAL; 
+    }
+    | NE { 
+      $$ = NOT_EQUAL; 
+    }
     ;
 
 load_data_stmt:
