@@ -24,10 +24,10 @@ class InsertStmt;
  * @brief 插入物理算子
  * @ingroup PhysicalOperator
  */
-class InsertPhysicalOperator : public PhysicalOperator
+class InsertPhysicalOperator : public PhysicalOperator //TODO
 {
 public:
-  InsertPhysicalOperator(Table *table, std::vector<Value> &&values);
+  InsertPhysicalOperator(Table *table, std::vector<std::vector<Value>> &&values_list);
 
   virtual ~InsertPhysicalOperator() = default;
 
@@ -44,5 +44,5 @@ public:
 
 private:
   Table *table_ = nullptr;
-  std::vector<Value> values_;
+  std::vector<std::vector<Value>> values_list_;
 };

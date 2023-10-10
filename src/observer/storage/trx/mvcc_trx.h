@@ -66,9 +66,9 @@ public:
   MvccTrx(MvccTrxKit &trx_kit, int32_t trx_id); // used for recover
   virtual ~MvccTrx();
 
-  RC insert_record(Table *table, Record &record) override;
-  RC delete_record(Table *table, Record &record) override;
-  RC update_record(Table *table, Record &record, const Value &value, const std::string &field) override; // Not Writen
+  RC insert_record(Table *table, std::vector<Record> &records) override; // UNIMPLENMENT
+  RC delete_record(Table *table, Record &record) override; 
+  RC update_record(Table *table, Record &record, const Value &value, const std::string &field) override; // UNIMPLENMENT
 
   /**
    * @brief 当访问到某条数据时，使用此函数来判断是否可见，或者是否有访问冲突
