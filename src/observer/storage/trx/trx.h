@@ -145,7 +145,7 @@ public:
   Trx() = default;
   virtual ~Trx() = default;
 
-  virtual RC insert_record(Table *table, Record &record) = 0;
+  virtual RC insert_record(Table *table, std::vector<Record> &records) = 0; // 先不实现mvcc_trx中的具体细节，只实现没有事务的版本
   virtual RC delete_record(Table *table, Record &record) = 0;
   virtual RC update_record(Table *table, Record &record, const Value &value, const std::string &field) = 0; // 没有实现mvcc_trx中的具体细节，只实现没有事务的版本
   virtual RC visit_record(Table *table, Record &record, bool readonly) = 0;
