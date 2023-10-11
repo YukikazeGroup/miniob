@@ -745,8 +745,8 @@ RC BplusTreeHandler::sync()
   return disk_buffer_pool_->flush_all_pages();
 }
 
-RC BplusTreeHandler::create(const char *file_name, AttrType attr_type, int attr_length, int internal_max_size /* = -1*/,
-    int leaf_max_size /* = -1 */)
+RC BplusTreeHandler::create(const char *file_name, AttrType attr_type, int attr_length, const bool &is_unique,
+    int internal_max_size /* = -1*/, int leaf_max_size /* = -1 */)
 {
   BufferPoolManager &bpm = BufferPoolManager::instance();
   RC rc = bpm.create_file(file_name);
@@ -815,7 +815,8 @@ RC BplusTreeHandler::create(const char *file_name, AttrType attr_type, int attr_
 
   this->sync();
 
-  LOG_INFO("Successfully create index %s", file_name);
+  is_unique_ = is_unique;
+  LOG_INFO("Successfully create index %s, is_unique:%s", file_name, (is_unique_?"true":"false"));
   return RC::SUCCESS;
 }
 
@@ -1366,6 +1367,21 @@ RC BplusTreeHandler::insert_entry(const char *user_key, const RID *rid)
     LOG_WARN("Invalid arguments, key is empty or rid is empty");
     return RC::INVALID_ARGUMENT;
   }
+  RC rc;
+
+  if (is_unique_) {
+    std::list<RID> rids;
+    rc = get_entry(user_key, 4, rids);
+    if (rc != RC::SUCCESS) {
+      LOG_WARN("Failed to scan indexes before insertion. rc=%s.", strrc(rc));
+      return rc;
+    } else {
+      if (rids.size() > 0) {
+        LOG_WARN("Already inserted the key.");
+        return RC::INTERNAL;
+      }
+    }
+  }
 
   MemPoolItem::unique_ptr pkey = make_key(user_key, *rid);
   if (pkey == nullptr) {
@@ -1378,7 +1394,7 @@ RC BplusTreeHandler::insert_entry(const char *user_key, const RID *rid)
   if (is_empty()) {
     root_lock_.lock();
     if (is_empty()) {
-      RC rc = create_new_tree(key, rid);
+      rc = create_new_tree(key, rid);
       root_lock_.unlock();
       return rc;
     }
@@ -1388,7 +1404,7 @@ RC BplusTreeHandler::insert_entry(const char *user_key, const RID *rid)
   LatchMemo latch_memo(disk_buffer_pool_);
 
   Frame *frame = nullptr;
-  RC rc = find_leaf(latch_memo, BplusTreeOperationType::INSERT, key, frame);
+  rc = find_leaf(latch_memo, BplusTreeOperationType::INSERT, key, frame);
   if (rc != RC::SUCCESS) {
     LOG_WARN("Failed to find leaf %s. rc=%d:%s", rid->to_string().c_str(), rc, strrc(rc));
     return rc;

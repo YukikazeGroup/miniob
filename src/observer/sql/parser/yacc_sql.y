@@ -74,6 +74,7 @@ ArithmeticExpr *create_arithmetic_expression(ArithmeticExpr::Type type,
         TRX_BEGIN
         TRX_COMMIT
         TRX_ROLLBACK
+        UNIQUE
         INT_T
         STRING_T
         FLOAT_T
@@ -267,9 +268,22 @@ create_index_stmt:    /*create index 语句的语法解析树*/
       create_index.index_name = $3;
       create_index.relation_name = $5;
       create_index.attribute_name = $7;
+      create_index.is_unique = false;
       free($3);
       free($5);
       free($7);
+    } 
+    | CREATE UNIQUE INDEX ID ON ID LBRACE ID RBRACE
+    {
+      $$ = new ParsedSqlNode(SCF_CREATE_INDEX);
+      CreateIndexSqlNode &create_index = $$->create_index;
+      create_index.index_name = $4;
+      create_index.relation_name = $6;
+      create_index.attribute_name = $8;
+      create_index.is_unique = true;
+      free($4);
+      free($6);
+      free($8);
     }
     ;
 
@@ -374,14 +388,13 @@ insert_stmt:        /*insert   语句的语法解析树*/
     ;
 
 value_list_list:
-    /* empty */
-    {
-      $$ = nullptr;
-    }
-    | value_tuple {
+    /* include empty */
+    value_tuple {
       $$ = new std::vector<std::vector<Value>>;
-      $$->emplace_back(*$1);
-      delete $1;
+      if ($1 != nullptr) {
+        $$->emplace_back(*$1);
+        delete $1;
+      }
     } 
     | value_tuple COMMA value_list_list {
       $$ = $3;

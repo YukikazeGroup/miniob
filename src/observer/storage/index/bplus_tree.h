@@ -464,7 +464,8 @@ public:
    */
   RC create(const char *file_name, 
             AttrType attr_type, 
-            int attr_length, 
+            int attr_length,
+            const bool &is_unique, 
             int internal_max_size = -1, 
             int leaf_max_size = -1);
 
@@ -583,6 +584,7 @@ protected:
 private:
   friend class BplusTreeScanner;
   friend class BplusTreeTester;
+  bool is_unique_;
 };
 
 /**
