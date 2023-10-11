@@ -27,7 +27,7 @@ public:
   BplusTreeIndex() = default;
   virtual ~BplusTreeIndex() noexcept;
 
-  RC create(const char *file_name, const IndexMeta &index_meta, const FieldMeta &field_meta);
+  RC create(const char *file_name, const IndexMeta &index_meta, const FieldMeta &field_meta, const bool &is_unique);
   RC open(const char *file_name, const IndexMeta &index_meta, const FieldMeta &field_meta);
   RC close();
 
@@ -45,6 +45,7 @@ public:
 private:
   bool inited_ = false;
   BplusTreeHandler index_handler_;
+  bool is_unique_ = false;
 };
 
 /**
