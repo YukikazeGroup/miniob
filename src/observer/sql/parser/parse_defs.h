@@ -77,6 +77,17 @@ struct ConditionSqlNode
 };
 
 /**
+ * @brief 描述Inner Join的表与条件
+ * @ingroup SQLParser
+ * @details 使用Inner Join时conditions不为空，不使用Inner Join时conditions为空
+ */
+struct InnerJoinSqlNode
+{
+  std::vector<std::string> relation_names;   ///< list of relation name       From 语句后面的一列表名
+  std::vector<ConditionSqlNode> conditions;  ///< conditions                  Inner Join时使用的条件，如果不用Inner Join，默认为空            
+};
+
+/**
  * @brief 描述一个select语句
  * @ingroup SQLParser
  * @details 一个正常的select语句描述起来比这个要复杂很多，这里做了简化。
