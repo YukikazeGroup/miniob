@@ -630,14 +630,16 @@ rel_list:
       $$->relation_names.push_back($2);
       free($2);
     }
-    | INNER JOIN ID ON condition rel_list {
+    | INNER JOIN ID ON condition_list rel_list {
       if ($6 != nullptr) {
         $$ = $6;
       } else {
         $$ = new InnerJoinSqlNode;
       }
       $$->relation_names.push_back($3);
-      $$->conditions.emplace_back(*$5);
+      for (ConditionSqlNode &item : (*$5)) {
+          $$->conditions.emplace_back(std::move(item));
+        }
       free($3);
       delete $5;
     }
