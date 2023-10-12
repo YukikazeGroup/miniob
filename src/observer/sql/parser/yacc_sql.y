@@ -60,6 +60,8 @@ ArithmeticExpr *create_arithmetic_expression(ArithmeticExpr::Type type,
         TABLE
         TABLES
         INDEX
+        INNER
+        JOIN
         CALC
         SELECT
         DESC
@@ -114,7 +116,7 @@ ArithmeticExpr *create_arithmetic_expression(ArithmeticExpr::Type type,
   std::vector<std::vector<Value>> * value_list_list;
   std::vector<ConditionSqlNode> *   condition_list;
   std::vector<RelAttrSqlNode> *     rel_attr_list;
-  std::vector<std::string> *        relation_list;
+  InnerJoinSqlNode *                relation_list;
   char *                            string;
   int                               number;
   float                             floats;
@@ -488,17 +490,23 @@ select_stmt:        /*  select 语句的语法解析树*/
         $$->selection.attributes.swap(*$2);
         delete $2;
       }
-      if ($5 != nullptr) {
-        $$->selection.relations.swap(*$5);
-        delete $5;
-      }
-      $$->selection.relations.push_back($4);
-      std::reverse($$->selection.relations.begin(), $$->selection.relations.end());
 
       if ($6 != nullptr) {
         $$->selection.conditions.swap(*$6);
         delete $6;
       }
+
+      if ($5 != nullptr) {
+        $$->selection.relations.swap($5->relation_names);
+        /* 在这里就将inner join的条件移动到selection.conditions */
+        for (ConditionSqlNode &item : $5->conditions) {
+          $$->selection.conditions.emplace_back(std::move(item));
+        }
+        delete $5;
+      }
+      $$->selection.relations.push_back($4);
+      std::reverse($$->selection.relations.begin(), $$->selection.relations.end());
+
       free($4);
     }
     ;
@@ -617,11 +625,21 @@ rel_list:
       if ($3 != nullptr) {
         $$ = $3;
       } else {
-        $$ = new std::vector<std::string>;
+        $$ = new InnerJoinSqlNode;
       }
-
-      $$->push_back($2);
+      $$->relation_names.push_back($2);
       free($2);
+    }
+    | INNER JOIN ID ON condition rel_list {
+      if ($6 != nullptr) {
+        $$ = $6;
+      } else {
+        $$ = new InnerJoinSqlNode;
+      }
+      $$->relation_names.push_back($3);
+      $$->conditions.emplace_back(*$5);
+      free($3);
+      delete $5;
     }
     ;
 
