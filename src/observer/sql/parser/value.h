@@ -70,7 +70,7 @@ public:
   void set_string(const char *s, int len = 0);
   void set_date(int val);
   void set_value(const Value &value);
-  void set_date_init(const char *s, int len = 0);
+  bool set_date_init(const char *s, int len = 0);
 
   std::string to_string() const;
 

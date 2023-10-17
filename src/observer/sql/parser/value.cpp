@@ -147,7 +147,7 @@ void Value::set_value(const Value &value)
   }
 }
 
-void Value::set_date_init(const char *s, int len /*= 0*/)
+bool Value::set_date_init(const char *s, int len /*= 0*/)
 {
   attr_type_ = DATES;
   int y,m,d,pos;
@@ -169,6 +169,7 @@ void Value::set_date_init(const char *s, int len /*= 0*/)
   LOG_WARN("num_value_.int_value_:%d",num_value_.int_value_);
   length_ = sizeof(num_value_.int_value_) ;
   LOG_WARN("date length_:%d",length_);
+  return b;
 }
 
 const char *Value::data() const
@@ -239,7 +240,7 @@ int Value::compare(const Value &other) const
 {
   if (this->attr_type_ == other.attr_type_) {
     switch (this->attr_type_) {
-      case INTS: {
+      case INTS: case DATES:{
         return common::compare_int((void *)&this->num_value_.int_value_, (void *)&other.num_value_.int_value_);
       } break;
       case FLOATS: {

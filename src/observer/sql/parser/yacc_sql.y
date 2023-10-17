@@ -387,7 +387,11 @@ value:
       char *tmp = common::substr($1,1,strlen($1)-2);
       $$ = new Value(tmp);
       $$->set_type(AttrType::DATES);
-      $$->set_date_init(tmp);
+      bool b = $$->set_date_init(tmp);
+      if(!b) {
+        yyerror (&yylloc, sql_string, sql_result, scanner, YY_("Integrity FAILURE")); 
+        YYERROR;
+      }
       free(tmp);
     }
     |SSS {
